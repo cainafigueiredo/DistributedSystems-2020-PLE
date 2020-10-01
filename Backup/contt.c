@@ -2,11 +2,14 @@
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 atomic_flag lock = ATOMIC_FLAG_INIT;
-int tam = 10;
+int tam ;
 int soma = 0;
-int threadnums=2;
+int threadnums;
+char *nums;
+struct timeval t1,t2;
 
 void acquire(){
   while(atomic_flag_test_and_set(&lock));
@@ -16,12 +19,19 @@ void release(){
   atomic_flag_clear(&lock);
 }
 
+int fim(int a, int b,int c,int index){
+  if (index==b-1){return c;}
+  return a+(c/b);
+}	
+
+
 void* somador(void *arg){
-  char *arr=(char*)arg; 
+  int i=(int)arg; 
   acquire();
-  int i;
-  for (i=0; i<tam;i++){
-    soma=soma+(int)arr[i] ;
+  int j;
+  int start = i*(tam/threadnums);
+  for(j=start;j<fim(start,threadnums , tam,i);j++){
+    soma=soma+(int)nums[j] ;
   }
   release();
   return NULL;
@@ -30,21 +40,22 @@ void* somador(void *arg){
 
 
 
-int main(void) {
-  char nums[tam];
+int main(int argc, char *argv[]) {
+  tam=atoi(argv[1]);
+  threadnums=atoi(argv[2]);
+  nums= malloc(tam);
   srand(time(NULL));
   pthread_t * threads = malloc(sizeof(pthread_t)*threadnums);
   int i;
-  for (i=0;i<10;i++){
+  for (i=0;i<tam;i++){
     nums[i]=(char)(rand()%201 - 101); 
-    printf("%d\n", nums[i]); 
+    //printf("%d\n", nums[i]); 
   }
-  somador(nums);
-  printf("soma1: %d\n", soma); 
-
+  
+  gettimeofday(&t1, NULL);
   for (i = 0; i < threadnums; i++) {
-
-    int t = pthread_create(&threads[i], NULL,&somador, nums);
+    int *p=i;
+    int t = pthread_create(&threads[i], NULL,&somador, (void*)p);
     
   }
   
@@ -53,7 +64,9 @@ int main(void) {
     pthread_join(threads[i], NULL);
     
   }
-  printf("%d\n", soma); 
+  gettimeofday(&t2, NULL);
+  printf("Elapsed %f seconds\n", (double)((t2.tv_sec * 1000000 + t2.tv_usec) -
+    (t1.tv_sec * 1000000 + t1.tv_usec))/1000000);
 
   
 
