@@ -27,12 +27,14 @@ int fim(int a, int b,int c,int index){
 
 void* somador(void *arg){
   int i=(int)arg; 
-  acquire();
   int j;
+  int parc = 0;
   int start = i*(tam/threadnums);
   for(j=start;j<fim(start,threadnums , tam,i);j++){
-    soma=soma+(int)nums[j] ;
+    parc=parc+(int)nums[j] ;
   }
+  acquire();
+  soma = soma+parc;
   release();
   return NULL;
 }
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
     
   }
   gettimeofday(&t2, NULL);
-  printf("Elapsed %f seconds\n", (double)((t2.tv_sec * 1000000 + t2.tv_usec) -
+  printf("%f\n", (double)((t2.tv_sec * 1000000 + t2.tv_usec) -
     (t1.tv_sec * 1000000 + t1.tv_usec))/1000000);
 
   
